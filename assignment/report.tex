@@ -1,0 +1,66 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\setlist{nosep}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+\title{Assignment 1: Classifiers}
+\author{Kevin Deshayes\\ kede23@student.bth.se\\ DV2638}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Introduction}
+This assignment investigates machine-learning models for predicting wine quality based on physicochemical attributes. The dataset was obtained from the UCI Machine Learning Repository and contains numerical features such as acidity, alcohol percentage, and sulphates, along with a discrete quality label.
+The experiments were conducted on the red wine subset of the Wine Quality dataset, which contains 1599 samples and quality labels ranging from 3 to 8.
+
+\section*{Method}
+The data was split into train and test sets using an 80/20 stratified split to preserve the class distribution. All features were standardized using \texttt{StandardScaler}. Two classifiers were selected: Logistic Regression (simple linear baseline) and Random Forest (nonlinear ensemble model suited for tabular data). Hyperparameters were set as follows:
+
+\textbf{Logistic Regression:} solver=lbfgs, max\_iter=1000, random\_state=2000.  
+\textbf{Random Forest:} n\_estimators=1000, random\_state=2000.
+
+Performance was evaluated using Repeated 3-Fold Cross-Validation (10 repeats, 30 splits). Due to class imbalance, macro-averaged F1 was used. The best model from cross-validation was retrained on the full training set and evaluated on the held-out test set. To study imbalance effects, the training set was also balanced using oversampling (imbalanced-learn), and the evaluation process was repeated.
+
+\section*{Results}
+Cross-validation showed that Random Forest outperformed Logistic Regression with higher performance and lower variance:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Mean F1 (CV)} & \textbf{Std F1 (CV)} \\
+\midrule
+Logistic Regression & 0.289 & 0.029 \\
+Random Forest & \textbf{0.320} & \textbf{0.010} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Random Forest was selected as the final model.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Test Accuracy} & \textbf{Test Macro F1} \\
+\midrule
+Random Forest (unbalanced train) & \textbf{0.678} & \textbf{0.401} \\
+Random Forest (balanced train) & 0.622 & 0.363 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Balancing improved cross-validation performance but did not improve generalization, since the test set remained imbalanced. Minority classes became easier to predict, but overall test accuracy and macro-F1 decreased.
+
+\section*{Conclusion}
+Random Forest achieved the best cross-validation performance and the best test results among the evaluated models. Balancing the training data increased validation performance but reduced test performance due to mismatch between balanced training and imbalanced test distribution. The unbalanced Random Forest model demonstrated the strongest generalization, while dataset imbalance remained the main limitation.
+\end{document}
