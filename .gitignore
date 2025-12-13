@@ -223,3 +223,4 @@ __marimo__/
 *.synctex.gz
 *.pdf
 
+.vscode

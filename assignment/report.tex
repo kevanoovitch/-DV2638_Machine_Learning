@@ -1,43 +1,62 @@
-\documentclass[11pt,a4paper]{article}
-
-\usepackage[margin=2cm]{geometry}
-\usepackage{amsmath,amssymb}
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
 \usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
 \usepackage{booktabs}
-\usepackage{hyperref}
-\usepackage{enumitem}
-\setlist{nosep}
 
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{4pt}
-
-\title{Assignment 1: Classifiers}
-\author{Kevin Deshayes\\ kede23@student.bth.se\\ DV2638}
-\date{}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em%
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
 \begin{document}
+
+\title{Assignment 1: Classifiers}
+
+\author{\IEEEauthorblockN{Kevin Deshayes}
+\IEEEauthorblockA{\textit{DV2638} \\
+\textit{Blekinge Institute of Technology}\\
+Karlskrona, Sweden \\
+kede23@student.bth.se}
+}
+
 \maketitle
 
-\section*{Introduction}
-This assignment investigates machine-learning models for predicting wine quality based on physicochemical attributes. The dataset was obtained from the UCI Machine Learning Repository and contains numerical features such as acidity, alcohol percentage, and sulphates, along with a discrete quality label.
-The experiments were conducted on the red wine subset of the Wine Quality dataset, which contains 1599 samples and quality labels ranging from 3 to 8.
+\section{Introduction}
+The Wine Quality dataset contains physicochemical features
+describing physicochemical properties of wine and a
+discrete quality label. This work focuses on predicting wine quality
+using supervised learning for the red-wine subset (1599 samples), where
+quality labels range from 3 to 8.
 
-\section*{Method}
-The data was split into train and test sets using an 80/20 stratified split to preserve the class distribution. All features were standardized using \texttt{StandardScaler}. Two classifiers were selected: Logistic Regression (simple linear baseline) and Random Forest (nonlinear ensemble model suited for tabular data). Hyperparameters were set as follows:
+\section{Method}
+An 80/20 stratified split was used to preserve class distribution.
+Features were standardized using the \texttt{StandardScaler}. Two
+classifiers were trained:
 
-\textbf{Logistic Regression:} solver=lbfgs, max\_iter=1000, random\_state=2000.  
-\textbf{Random Forest:} n\_estimators=1000, random\_state=2000.
+\begin{itemize}
+    \item \textbf{Logistic Regression}: lbfgs solver, max\_iter=1000.
+    \item \textbf{Random Forest}: 1000 trees, random\_state=2000.
+\end{itemize}
 
-Performance was evaluated using Repeated 3-Fold Cross-Validation (10 repeats, 30 splits). Due to class imbalance, macro-averaged F1 was used. The best model from cross-validation was retrained on the full training set and evaluated on the held-out test set. To study imbalance effects, the training set was also balanced using oversampling (imbalanced-learn), and the evaluation process was repeated.
+Repeated 3-Fold Cross-Validation (10 repeats) was applied using
+macro-F1 due to imbalance. The best model was retrained on the full
+training split and evaluated on the held-out test set. Oversampling was
+also tested to analyze imbalance effects.
 
-\section*{Results}
-Cross-validation showed that Random Forest outperformed Logistic Regression with higher performance and lower variance:
 
-\begin{table}[h]
+\section{Results}
+\subsection{Cross-Validation}
+Random Forest achieved higher macro-F1 and lower variance.
+
+\begin{table}[htbp]
 \centering
+\caption{Cross-Validation Performance}
 \begin{tabular}{lcc}
 \toprule
-\textbf{Model} & \textbf{Mean F1 (CV)} & \textbf{Std F1 (CV)} \\
+\textbf{Model} & \textbf{Mean F1} & \textbf{Std} \\
 \midrule
 Logistic Regression & 0.289 & 0.029 \\
 Random Forest & \textbf{0.320} & \textbf{0.010} \\
@@ -45,22 +64,28 @@ Random Forest & \textbf{0.320} & \textbf{0.010} \\
 \end{tabular}
 \end{table}
 
-The Random Forest was selected as the final model.
-
-\begin{table}[h]
+\subsection{Test Performance}
+\begin{table}[htbp]
 \centering
+\caption{Test Set Results}
 \begin{tabular}{lcc}
 \toprule
-\textbf{Model} & \textbf{Test Accuracy} & \textbf{Test Macro F1} \\
+\textbf{Model} & \textbf{Accuracy} & \textbf{Macro F1} \\
 \midrule
-Random Forest (unbalanced train) & \textbf{0.678} & \textbf{0.401} \\
-Random Forest (balanced train) & 0.622 & 0.363 \\
+Random Forest (unbalanced) & \textbf{0.678} & \textbf{0.401} \\
+Random Forest (balanced) & 0.622 & 0.363 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Balancing improved cross-validation performance but did not improve generalization, since the test set remained imbalanced. Minority classes became easier to predict, but overall test accuracy and macro-F1 decreased.
+Balancing improved minority-class recall during training but reduced test
+generalization since the real test distribution remained imbalanced.
 
-\section*{Conclusion}
-Random Forest achieved the best cross-validation performance and the best test results among the evaluated models. Balancing the training data increased validation performance but reduced test performance due to mismatch between balanced training and imbalanced test distribution. The unbalanced Random Forest model demonstrated the strongest generalization, while dataset imbalance remained the main limitation.
+\section{Conclusion}
+Random Forest showed the strongest validation and test performance.
+Oversampling improved validation metrics but decreased test generalization,
+thus the unbalanced model is preferred. Dataset imbalance remains the main
+limiting factor.
+
+
 \end{document}

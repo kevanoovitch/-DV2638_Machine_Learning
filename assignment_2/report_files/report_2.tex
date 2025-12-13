@@ -1,0 +1,220 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{dblfloatfix}
+\usepackage{placeins}
+\usepackage{caption}
+
+
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+
+\title{Assignment 2: Supervised classifiers}
+
+\author{\IEEEauthorblockN{Kevin Deshayes}
+\IEEEauthorblockA{\textit{DV2638} \\
+\textit{Blekinge Institute of Technology}\\
+Karlskrona, Sweden \\
+kede23@student.bth.se}
+}
+
+\maketitle
+
+
+\subsection{Introduction}
+The problem presented in the assignment is a binary classification problem. Where a provided Spambase dataset is used in order
+to classify emails as spam or not spam. The task shall be conducted by selecting three supervised classification models and evaulating them
+based on these measures: 
+\begin{itemize}
+    \item Accuracy
+    \item F-measures
+    \item Training time 
+\end{itemize}
+
+The dataset is used with stratified ten-fold cross-validation. To determined whether observed performance
+differences are statistically significant, the Friedman test is applied. That test is followed by Nemenyi post-hoc test when 
+appropriate. 
+
+ \subsection{Experimental setup}
+
+The experiments were conducted using the Spambase dataset from the UCI Machine Learning Repository, consisting of 4601 email instances described by 57 continuous features. Each instance is labeled as spam or non-spam, forming a binary classification problem with a moderately imbalanced class distribution.
+
+Three supervised learning algorithms were evaluated: Logistic Regression, Linear Support Vector Machine, and Random Forest. These models were selected to represent linear classifiers and an ensemble-based non-linear method commonly used in text classification.
+
+Performance was evaluated using stratified ten-fold cross-validation with respect to training time, accuracy, and F-measure. The latter was included to account for class imbalance.
+
+
+\begin{table}[h]
+\centering
+\caption{Mean performance of the classifiers obtained using stratified 10-fold cross-validation.}
+\label{tab:summary_results}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Algorithm & Training time (s) & Accuracy & F-measure \\
+\midrule
+Logistic Regression & 0.0102 & 0.9257 & 0.9036 \\
+Linear SVM & 0.0462 & 0.9244 & 0.9018 \\
+Random Forest & 0.8463 & 0.9559 & 0.9434 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+
+\subsection{Analysis of statistical results}
+
+
+\begin{table}[t]
+\centering
+\caption{Nemenyi post-hoc comparisons}
+\label{tab:nemenyi}
+\setlength{\tabcolsep}{5pt} % tighter table
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{@{}llcl@{}}
+\toprule
+Model A & Model B & Avg rank diff & Significant? \\
+\midrule
+Random Forest & Logistic Regression & 1.30 & Yes \\
+Random Forest & Linear SVM & 1.70 & Yes \\
+Logistic Regression & Linear SVM & 0.40 & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table*}[t]
+\centering
+\caption{F-measure results with ranks used for the Friedman test}
+\label{tab:friedman_fmeasure}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Data set & Logistic Regression & Linear SVM & Random Forest \\
+\midrule
+1  & 0.9252 (2) & 0.9227 (3) & 0.9700 (1) \\
+2  & 0.9122 (2) & 0.9040 (3) & 0.9448 (1) \\
+3  & 0.9014 (2) & 0.8977 (3) & 0.9577 (1) \\
+4  & 0.9176 (3) & 0.9231 (2) & 0.9448 (1) \\
+5  & 0.9034 (2) & 0.9034 (3) & 0.9333 (1) \\
+6  & 0.9136 (2) & 0.9076 (3) & 0.9474 (1) \\
+7  & 0.9138 (2) & 0.8920 (3) & 0.9524 (1) \\
+8  & 0.8908 (2) & 0.8883 (3) & 0.9261 (1) \\
+9  & 0.8814 (3) & 0.8933 (2) & 0.9256 (1) \\
+10 & 0.8764 (3) & 0.8857 (2) & 0.9314 (1) \\
+\midrule
+avg rank & 2.3 & 2.7 & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:friedman_fmeasure} shows the F-measure results and corresponding ranks used as input to the Friedman test.
+Using the average ranks in this table, the Friedman statistic exceeds the critical chi-square value at the 0.05 significance level.
+Thus, the null hypothesis that all classifiers perform equally with respect to F-measure is rejected.
+
+Due to space constraints, only the Friedman results for F-measure are reported.
+The same procedure was applied to training time and accuracy, yielding the same conclusion.
+
+Since statistically significant differences were detected, a Nemenyi post-hoc test was conducted to identify pairwise differences 
+between classifiers, as shown in Table~\ref{tab:nemenyi}. The results indicate that Random Forest performs significantly better than 
+both Logistic Regression and Linear SVM with respect to F-measure. No statistically significant difference was observed between 
+Logistic Regression and Linear SVM.
+
+For training time, all pairwise differences were found to be statistically significant, with Logistic Regression being the fastest 
+method and Random Forest exhibiting the highest computational cost.
+
+
+
+
+
+\subsection{Conclusion}
+
+
+The result of the assigned study based on the results shows that Random Forest achieved the highest accuracy and F-measure. 
+Random forest was found to perform significantly better than Logistical Regression and Linear SVM according to the statistical tests. 
+
+However, Random forest was also found to exhibit the highest training time, while Logistical Regression was much more computational efficient. 
+These results indicate a trade-off between predictive performance and computation costs.
+
+\begin{table*}[t]
+\centering
+\caption{Training time results (10-fold cross-validation)}
+\label{tab:time}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Fold & Logistic Regression & Linear SVM & Random Forest \\
+\midrule
+1  & 0.0146 & 0.0299 & 0.8532 \\
+2  & 0.0106 & 0.0865 & 0.8494 \\
+3  & 0.0093 & 0.0304 & 0.8327 \\
+4  & 0.0105 & 0.0429 & 0.8553 \\
+5  & 0.0110 & 0.0401 & 0.8463 \\
+6  & 0.0096 & 0.0304 & 0.8476 \\
+7  & 0.0084 & 0.0434 & 0.8415 \\
+8  & 0.0085 & 0.0311 & 0.8482 \\
+9  & 0.0089 & 0.0335 & 0.8475 \\
+10 & 0.0102 & 0.0937 & 0.8414 \\
+avg   & 0.0102 & 0.0462 & 0.8463 \\
+stdev & 0.0018 & 0.0238 & 0.0065 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\caption{Accuracy results (10-fold cross-validation)}
+\label{tab:accuracy}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Fold & Logistic Regression & Linear SVM & Random Forest \\
+\midrule
+1  & 0.9414 & 0.9393 & 0.9761 \\
+2  & 0.9326 & 0.9261 & 0.9565 \\
+3  & 0.9239 & 0.9217 & 0.9674 \\
+4  & 0.9348 & 0.9391 & 0.9565 \\
+5  & 0.9261 & 0.9261 & 0.9478 \\
+6  & 0.9326 & 0.9283 & 0.9587 \\
+7  & 0.9348 & 0.9174 & 0.9630 \\
+8  & 0.9174 & 0.9152 & 0.9435 \\
+9  & 0.9087 & 0.9174 & 0.9413 \\
+10 & 0.9043 & 0.9130 & 0.9478 \\
+avg   & 0.9257 & 0.9244 & 0.9559 \\
+stdev & 0.0121 & 0.0093 & 0.0111 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\caption{F-measure results (10-fold cross-validation)}
+\label{tab:fmeasure}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Fold & Logistic Regression & Linear SVM & Random Forest \\
+\midrule
+1 & 0.9252 & 0.9227 & 0.9700 \\
+2 & 0.9122 & 0.9040 & 0.9448 \\
+3 & 0.9014 & 0.8977 & 0.9577 \\
+4 & 0.9176 & 0.9231 & 0.9448 \\
+5 & 0.9034 & 0.9034 & 0.9333 \\
+6 & 0.9136 & 0.9076 & 0.9474 \\
+7 & 0.9138 & 0.8920 & 0.9524 \\
+8 & 0.8908 & 0.8883 & 0.9261 \\
+9 & 0.8814 & 0.8933 & 0.9256 \\
+10 & 0.8764 & 0.8857 & 0.9314 \\
+avg & 0.9036 & 0.9018 & 0.9434 \\
+stdev & 0.0161 & 0.0131 & 0.0144 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+
+\end{document}
