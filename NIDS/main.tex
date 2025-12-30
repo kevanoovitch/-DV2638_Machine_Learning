@@ -1,0 +1,291 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{dblfloatfix}
+\usepackage{placeins}
+\usepackage{caption}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  frame=single,
+  breaklines=true,
+  captionpos=b
+}
+
+
+
+
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+
+\title{Flow-Based Network Intrusion Detection Using Random Forests}
+
+\author{\IEEEauthorblockN{Kevin Deshayes}
+\IEEEauthorblockA{\textit{Department of Computer Science} \\
+\textit{Blekinge Institute of Technology}\\
+Karlskrona, Sweden \\
+kede23@student.bth.se}
+}
+
+\maketitle
+
+\begin{abstract}
+Network intrusion detection is a critical component of modern computer networks, where timely and accurate identification of malicious traffic is essential for maintaining system availability and security. In this work, a flow-based network intrusion detection system is developed using a Random Forest classifier and a cleaned version of the CICIDS2017 dataset. The learning task is formulated as a three-class classification problem, distinguishing between normal traffic, denial-of-service (DoS) attacks, and other malicious activities under strong class imbalance.
+
+The proposed approach requires minimal preprocessing and relies on statistical flow features to characterize network behavior. Experimental results show that the Random Forest classifier achieves high Precision, Recall, and F1-scores across all classes. In particular, moderate depth regularization improves detection of heterogeneous attack traffic without degrading performance on benign or DoS traffic. Feature importance analysis indicates that packet length variability and directional traffic characteristics are key factors in distinguishing malicious behavior.
+
+These results demonstrate that Random Forest models provide an effective and interpretable solution for flow-based intrusion detection in imbalanced network traffic scenarios.
+\end{abstract}
+
+\section{Introduction}
+
+Modern computer networks are continuously exposed to a wide range of malicious activities, including denial-of-service attacks, scanning behavior, and exploitation attempts. Network intrusion detection systems (NIDS) play a crucial role in identifying such threats by monitoring network traffic and distinguishing between benign and malicious behavior. Traditional signature-based detection methods struggle to detect novel or evolving attacks, motivating the use of machine learning techniques that can learn patterns directly from data.
+
+This project investigates the application of traditional machine learning to flow-based network intrusion detection. Using a cleaned and merged version of the CICIDS2017 dataset, the intrusion detection task is formulated as a multi-class classification problem under strong class imbalance. A Random Forest classifier is employed due to its robustness on tabular data, minimal preprocessing requirements, and inherent interpretability.
+
+The objective of this work is to evaluate the effectiveness of Random Forest models for detecting denial-of-service attacks and other malicious traffic while maintaining a low false alarm rate for normal traffic. The study further examines the impact of model complexity on detection performance and analyzes feature importance to better understand the characteristics that distinguish malicious network behavior.
+
+ \section{Method}
+
+The dataset used in this study is a cleaned and merged version of the CICIDS2017 dataset, obtained from a publicly available Kaggle repository~\cite{cicids2017_kaggle}.
+
+It consists of seven categories.
+\begin{table}[h]
+\centering
+\caption{Distribution of attack categories in the CICIDS2017-based dataset}
+\label{tab:attack_distribution}
+\begin{tabular}{lc}
+\toprule
+Attack Category & Number of Flows \\
+\midrule
+Normal Traffic & 2\,095\,057 \\
+DoS            & 193\,745 \\
+DDoS           & 128\,014 \\
+Port Scanning  & 90\,694 \\
+Brute Force    & 9\,150 \\
+Web Attacks    & 2\,143 \\
+Bots           & 1\,948 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+The seven labels are grouped into three broader classes:
+\begin{itemize}
+    \item Normal = Normal Traffic
+    \item DoS = DoS + DDoS
+    \item Other = Port Scanning + Brute Force + Web Attacks + Bots
+\end{itemize}
+
+The dataset contains no missing (NaN) values and no infinite values, verified using the following validation procedure.
+
+\begin{lstlisting}[language=Python, caption={Verification of missing and infinite values in the dataset}]
+n_nan = dataset.isna().sum().sum()
+n_inf = np.isinf(dataset.select_dtypes(include=[np.number])).sum().sum()
+\end{lstlisting}
+
+\subsection{Preprocessing}
+After the three-class mapping was performed, the original \textit{Attack Type} label was removed in favor of the aggregated \textit{Attack\_Class}.
+
+Afterwards each of the \textit{Attack\_Class} was encoded and mapped to a numeric value. 
+
+No feature scaling was applied, as Random Forest classifiers are composed of CART decision trees that perform axis-aligned, threshold-based splits \cite{Flach2012}. Such trees do not rely on distance-based computations and are invariant under monotonic transformations of the input features \cite{HTF2009}. In contrast, distance-based learning algorithms require feature normalisation to ensure meaningful similarity computations \cite{Flach2012}. The Random Forest framework used in this work follows the formulation introduced by Breiman \cite{Breiman2001}. 
+
+To address class imbalance, class weighting was applied during model training using the \textit{class\_weight="balanced"} option. This approach adjusts the contribution of each class to the learning objective based on their relative frequencies, thereby improving sensitivity to minority attack classes without altering the original data distribution.
+
+Resampling techniques such as over-sampling or under-sampling were not applied. While such methods can improve class balance, they may distort the underlying feature distributions or amplify noise, particularly in high-dimensional network traffic data. Preserving the original distribution of flow-level features was therefore prioritized to maintain realistic traffic characteristics and reduce the risk of overfitting.
+
+\subsection{Train/Test Split}
+A stratified 80/20 train--test split was conducted using a fixed random state of 42.
+
+\subsection{Model}
+
+The project used Random Forest in order to classify each entry into one of the three aforementioned \textit{Threat\_Classes} (Normal/DoS/Other).
+
+Random Forest was selected due to its strong performance on high-dimensional tabular data and its robustness to noisy and correlated features, which are common in network traffic datasets. Unlike linear models, Random Forest can capture non-linear interactions between flow-level statistics without requiring extensive feature engineering. Additionally, the model requires minimal preprocessing and provides inherent interpretability through feature importance measures.This is valuable for understanding the characteristics that distinguish benign traffic from different categories. 
+
+The baseline model used 100 estimators, random state 42 and -1 jobs. Class weight was balanced. 
+
+\subsection{Hyperparameter Study}
+\begin{table}[h]
+\centering
+\caption{Performance comparison of Random Forest models with different maximum tree depths}
+\label{tab:max_depth_comparison}
+\begin{tabular}{ccccc}
+\toprule
+Max Depth & Accuracy & Macro Precision & Macro Recall & Macro F1-score \\
+\midrule
+None & 0.9986 & 0.9956 & 0.9946 & 0.9951 \\
+10   & 0.9976 & 0.9909 & 0.9957 & 0.9933 \\
+20   & \textbf{0.9988} & 0.9935 & \textbf{0.9986} & \textbf{0.9960} \\
+30   & 0.9986 & 0.9946 & 0.9954 & 0.9950 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table ~\ref{tab:max_depth_comparison} shows that the optimal depth is 20.
+
+The baseline Random Forest already achieves strong performance across all classes, particularly for DoS detection. However, performance on the heterogeneous ‘Other’ class is slightly lower, motivating further analysis of model capacity and class imbalance handling.
+
+The effect of tree depth was studied to analyze the trade-off between model capacity and generalization. While an unrestricted depth already yielded strong performance, limiting the maximum depth to 20 improved recall for the heterogeneous ‘Other’ attack class from 98.65\% to 99.78\%, without degrading performance on Normal or DoS traffic. This suggests that moderate depth regularization improves minority-class generalization while preserving overall detection accuracy.
+
+\subsection{Evaluation Metrics}
+\begin{table}[h]
+\centering
+\caption{Baseline confusion matrix of the Random Forest classifier}
+\label{tab:confusion_matrix}
+\begin{tabular}{lccc}
+\toprule
+ & \multicolumn{3}{c}{Predicted Class} \\
+\cmidrule(lr){2-4}
+True Class & DoS & Normal & Other \\
+\midrule
+DoS    & 64\,223 & 126 & 3 \\
+Normal & 81 & 418\,707 & 224 \\
+Other  & 6 & 275 & 20\,506 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Baseline classification performance of the Random Forest model}
+\label{tab:classification_report}
+\begin{tabular}{lcccc}
+\toprule
+Class & Precision & Recall & F1-score & Support \\
+\midrule
+DoS    & 0.9986 & 0.9980 & 0.9983 & 64\,352 \\
+Normal & 0.9990 & 0.9993 & 0.9992 & 419\,012 \\
+Other  & 0.9891 & 0.9865 & 0.9878 & 20\,787 \\
+\midrule
+Accuracy     &        &        & 0.9986 & 504\,151 \\
+Macro Avg    & 0.9956 & 0.9946 & 0.9951 & 504\,151 \\
+Weighted Avg & 0.9986 & 0.9986 & 0.9986 & 504\,151 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:classification_report} shows that overall accuracy is not a reliable performance metric for this task due to the strong class imbalance in the dataset, where the majority of traffic belongs to the \textit{Normal} class. In the context of an intrusion detection system, a classifier can achieve high accuracy while still failing to detect a substantial number of attacks.
+
+These metrics provide a more realistic assessment of intrusion detection performance in operational environments, where undetected attacks can have severe consequences.
+
+Therefore, Precision, Recall, and F1-score are more informative evaluation metrics. Recall is particularly important, as it reflects the proportion of attack traffic that is correctly detected, with low recall indicating missed attacks. Precision complements this by measuring the proportion of predicted attacks that are truly malicious, thereby quantifying the false alarm rate. The F1-score balances these two aspects and provides a more meaningful summary of detection performance for minority attack classes.
+
+\section{Results}
+
+\begin{table}[h]
+\centering
+\caption{Top features based on Random Forest feature importance}
+\label{tab:top_features}
+\begin{tabular}{lc}
+\toprule
+Feature & Importance \\
+\midrule
+Packet Length Variance & 0.0814 \\
+Bwd Packet Length Std & 0.0731 \\
+Packet Length Std & 0.0659 \\
+Packet Length Mean & 0.0624 \\
+Average Packet Size & 0.0611 \\
+Fwd Packet Length Max & 0.0521 \\
+Bwd Packet Length Mean & 0.0517 \\
+Subflow Fwd Bytes & 0.0466 \\
+Max Packet Length & 0.0436 \\
+Total Length of Fwd Packets & 0.0388 \\
+Fwd Packet Length Mean & 0.0375 \\
+Destination Port & 0.0358 \\
+Bwd Packet Length Max & 0.0357 \\
+Bwd Packets/s & 0.0286 \\
+PSH Flag Count & 0.0251 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Comparison between baseline and tuned Random Forest models}
+\label{tab:model_comparison}
+\begin{tabular}{lcccc}
+\toprule
+Model & DoS F1 & Normal F1 & Other F1 & Acc. \\
+\midrule
+Baseline RF & 0.9983 & 0.9992 & 0.9878 & 0.9986 \\
+Tuned RF ($d=20$) & \textbf{0.9985} & \textbf{0.9993} & \textbf{0.9904} & \textbf{0.9988} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+The Random Forest classifier achieves strong performance across all three classes, with particularly high detection rates for Normal and DoS traffic. Despite the strong class imbalance in the dataset, the model maintains high Precision, Recall, and F1-scores for all classes, indicating effective separation between benign traffic and malicious activity. The remaining analysis focuses on comparing baseline and tuned model configurations, examining error behavior, and interpreting the most influential features.
+
+From the top features table its observed that a set of different features that all implies different things.
+\textbf{Packet Length Variance} measure variance in packet sizes and is a good indicator whether the traffic is part of DoS or normal traffic. Since DoS traffic often consists of highly repetitive packets which decreases variance. DoS attacks may also generate high burst which gives extreme variance. While Normal traffic is expected to be more regular.
+\textbf{Bwd Packet Length Std / Mean} reflects server behavior where attacks often generate minimal responses or highly uniform responses. Normal traffic is expected to show more bidirectional behavior.
+\textbf{Packet Length Mean / Std / Average Packet Size} captures overall traffic profile. This separates flooding attacks, port scans and interactive flows from each other. 
+\textbf{Destination port} has a very low importance. Although destination port information can introduce shortcut learning, its relative importance in the trained model is moderate compared to flow-level statistical features, indicating that the classifier primarily relies on traffic behavior rather than protocol-specific identifiers.
+
+Table ~\ref{tab:model_comparison} compares the baseline Random Forest classifier with a fine-tuned variant that uses a restrictive maximum tree depth. Both models achieve a high accuracy. However, the fine-tuned model shows a consistent improvement in F1-score for the \textit{Other} attack class, increasing from 0.9878 to 0.9904. The improvement can be explained by it having a higher recall rate for the \textit{Other} class which indicates fewer missed attack classifications. 
+
+Performance on the \textit{DoS} and \textit{Normal} classes remains largely unchanged, demonstrating that the improved detection of minority attack traffic does not come at the expense of increased false positives for benign flows or reduced detection of denial-of-service attacks. The results suggest that moderate depth regularization improves the generalization for complex attack patterns while preserving strong overall detection performance. 
+
+An analysis of the confusion matrix shows that most misclassifications occur between the \textit{Other} attack class and Normal traffic. This behavior is expected, as the \textit{Other} class aggregates several heterogeneous attack types whose traffic patterns may partially overlap with benign activity. In contrast, DoS traffic is rarely misclassified, indicating that its flow-level characteristics are highly distinctive.
+
+
+\subsection{Conclusion}
+This work investigated the application of a Random Forest classifier for flow-based network intrusion detection using a cleaned version of the CICIDS2017 dataset. The learning task focused on distinguishing between normal traffic, denial-of-service attacks, and other malicious activity under strong class imbalance.  
+
+The results show that Random Forest achieves high detection performance across all classes with minimal preprocessing, making it well-suited for this type of tabular network traffic data. In particular, the model demonstrates excellent detection of DoS traffic and maintains strong precision and recall for normal traffic, resulting in a low false alarm rate. By limiting the maximum tree depth, the detection of the heterogeneous \textit{Other} attack class was improved without degrading performance on the majority or DoS classes, highlighting the importance of moderate model regularization.  
+
+Feature importance analysis indicates that the classifier primarily relies on flow-level statistical characteristics such as packet length variability and directional traffic behavior, rather than protocol-specific identifiers. This suggests that the model captures meaningful behavioral patterns associated with malicious traffic.  
+
+Despite these promising results, the study is limited to offline evaluation on a single dataset and does not address real-time deployment or evolving attack patterns. Future work could explore online detection, evaluation on more recent datasets, or the integration of temporal features to further improve detection of complex and emerging attack behaviors.
+
+Overall, the findings support the use of ensemble-based classifiers as a strong baseline for practical network intrusion detection tasks.
+
+
+\section*{Contribution}
+
+This project was conducted by a single student. All aspects of the work were carried out by the author.
+
+\section{References}
+
+\begin{thebibliography}{4}
+
+\bibitem{cicids2017}
+I. Sharafaldin, A. H. Lashkari, and A. A. Ghorbani,
+``Toward Generating a New Intrusion Detection Dataset and Intrusion Traffic Characterization,''
+in \emph{Proc. Int. Conf. Information Systems Security and Privacy (ICISSP)}, 2018.
+
+\bibitem{breiman2001}
+L. Breiman,
+``Random Forests,''
+\emph{Machine Learning},
+vol. 45, no. 1, pp. 5--32, 2001.
+
+\bibitem{hastie2009}
+T. Hastie, R. Tibshirani, and J. Friedman,
+\emph{The Elements of Statistical Learning: Data Mining, Inference, and Prediction},
+2nd ed. Springer, 2009.
+
+\bibitem{flach2012}
+P. Flach,
+\emph{Machine Learning: The Art and Science of Algorithms that Make Sense of Data}.
+Cambridge University Press, 2012.
+
+\end{thebibliography}
+
+
+
+\end{document}
+
